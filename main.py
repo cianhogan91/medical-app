@@ -21,7 +21,6 @@ PROJECT_ID = "019d532d-231c-70b4-a1b6-28f103b1e3ca"
 API_URL = "https://us1.calypsoai.app/backend/v1/prompts"
 CHROMA_DIR = "chroma_db"
 COLLECTION_NAME = "patient_records"
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
 SECURITY_BLOCK_MSG = "🚨 **SECURITY ALERT:** This request was blocked by CVS Pharmacy Governance for a safety violation."
 
@@ -37,283 +36,289 @@ st.markdown("""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Serif+Display:ital@0;1&display=swap');
 
-  /* ── CSS Tokens ── */
+  /* ── Design Tokens ── */
   :root {
-    --cvs-red:        #CC0000;
-    --cvs-red-deep:   #9B0000;
-    --cvs-red-rich:   #B30000;
-    --cvs-red-soft:   #E8000010;
-    --cvs-red-border: #CC000028;
+    --cvs-red:          #CC0000;
+    --cvs-red-deep:     #8B0000;
+    --cvs-red-rich:     #AA0000;
+    --cvs-red-hover:    #B30000;
+    --cvs-red-tint:     #FFF1F1;
+    --cvs-red-border:   rgba(204,0,0,0.18);
+    --cvs-red-ring:     rgba(204,0,0,0.10);
 
-    --bg-base:        #FAFAF9;
-    --bg-surface:     #FFFFFF;
-    --bg-muted:       #F5F2F0;
-    --bg-inset:       #EDE9E6;
+    --bg-page:          #F7F4F2;
+    --bg-surface:       #FFFFFF;
+    --bg-muted:         #F2EEEC;
+    --bg-inset:         #EAE5E2;
 
-    --text-primary:   #1A1210;
-    --text-secondary: #5C4F4A;
-    --text-muted:     #9C8D87;
-    --text-on-red:    #FFFFFF;
+    --text-primary:     #18100E;
+    --text-secondary:   #5A4A44;
+    --text-muted:       #9A8880;
+    --text-on-red:      #FFFFFF;
 
-    --border-base:    #E2DBD8;
-    --border-strong:  #C9BCB8;
+    --border-light:     #E5DEDA;
+    --border-med:       #CEC5C0;
 
-    --shadow-card:    0 1px 3px rgba(80,30,20,.06), 0 4px 16px rgba(80,30,20,.08);
-    --shadow-lift:    0 4px 24px rgba(80,30,20,.12);
+    --shadow-xs:        0 1px 2px rgba(60,20,10,.05);
+    --shadow-sm:        0 1px 4px rgba(60,20,10,.07), 0 3px 12px rgba(60,20,10,.06);
+    --shadow-md:        0 4px 20px rgba(60,20,10,.10), 0 1px 4px rgba(60,20,10,.06);
+    --shadow-red:       0 3px 14px rgba(180,0,0,.20);
+    --shadow-red-lg:    0 6px 28px rgba(140,0,0,.26);
 
-    --radius-sm:  6px;
-    --radius-md:  10px;
-    --radius-lg:  16px;
-    --radius-xl:  24px;
+    --r-xs: 4px;
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
 
+    --font-ui:      'DM Sans', system-ui, sans-serif;
     --font-display: 'DM Serif Display', Georgia, serif;
-    --font-body:    'DM Sans', system-ui, sans-serif;
   }
 
-  /* ── Reset & Base ── */
+  /* ── App Shell ── */
   .stApp {
-    background: var(--bg-base) !important;
-    font-family: var(--font-body) !important;
+    background: var(--bg-page) !important;
+    font-family: var(--font-ui) !important;
     color: var(--text-primary) !important;
   }
   .block-container {
-    max-width: 760px !important;
+    max-width: 740px !important;
     padding-top: 0 !important;
     padding-bottom: 7rem !important;
   }
-
-  /* Hide Streamlit chrome */
   header[data-testid="stHeader"],
   footer,
   #MainMenu { display: none !important; }
 
-  /* Universal text reset */
+  /* ── Global Text ── */
   p, span, div, li, label {
     color: var(--text-primary) !important;
-    font-family: var(--font-body) !important;
+    font-family: var(--font-ui) !important;
   }
   h1, h2, h3 {
     color: var(--text-primary) !important;
     font-family: var(--font-display) !important;
   }
 
-  /* ── Top Navigation Bar ── */
+  /* ══════════════════════════════
+     TOP NAV BAR
+  ══════════════════════════════ */
   .top-bar {
     position: sticky;
     top: 0;
-    z-index: 200;
-    background: rgba(255,255,255,0.94);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-base);
-    padding: 0;
-    margin-bottom: 32px;
+    z-index: 300;
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 28px;
+    box-shadow: var(--shadow-xs);
   }
-  .top-bar-inner {
+  .nav-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 4px;
+    padding: 13px 2px;
   }
-  .top-bar-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .cvs-wordmark {
+  .nav-left { display: flex; align-items: center; gap: 11px; }
+
+  /* CVS red wordmark block */
+  .cvs-mark {
     background: var(--cvs-red);
     color: #fff !important;
-    font-family: var(--font-body) !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.12em;
-    padding: 4px 10px;
-    border-radius: 4px;
+    font-family: var(--font-ui) !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.15em;
+    padding: 5px 10px 4px;
+    border-radius: var(--r-xs);
     line-height: 1;
-  }
-  .top-bar-title {
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    color: var(--text-primary) !important;
-    font-family: var(--font-body) !important;
-    margin: 0 !important;
-    letter-spacing: -0.01em;
-  }
-  .top-bar-sub {
-    font-size: 11px !important;
-    color: var(--text-muted) !important;
-    margin: 2px 0 0 !important;
-    letter-spacing: 0.02em;
-  }
-  .top-bar-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  /* ── Pills & Badges ── */
-  .status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--bg-muted);
-    border: 1px solid var(--border-base);
-    border-radius: 20px;
-    padding: 5px 12px;
-    font-size: 11.5px !important;
-    color: var(--text-secondary) !important;
-    font-family: var(--font-body) !important;
-    font-weight: 500 !important;
-  }
-  .status-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #22C55E;
-    box-shadow: 0 0 0 2px #22C55E30;
     flex-shrink: 0;
   }
-  .gov-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: #FFF1F1;
-    border: 1px solid var(--cvs-red-border);
+  .nav-title {
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-ui) !important;
+    margin: 0 0 2px !important;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .nav-sub {
+    font-size: 10.5px !important;
+    color: var(--text-muted) !important;
+    margin: 0 !important;
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+  .nav-right { display: flex; align-items: center; gap: 7px; }
+
+  /* Status pill */
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--bg-muted);
+    border: 1px solid var(--border-light);
     border-radius: 20px;
-    padding: 5px 12px;
-    font-size: 11.5px !important;
-    color: var(--cvs-red) !important;
-    font-family: var(--font-body) !important;
+    padding: 4px 11px;
+    font-size: 11px !important;
+    color: var(--text-secondary) !important;
+    font-family: var(--font-ui) !important;
     font-weight: 500 !important;
-    letter-spacing: 0.01em;
+  }
+  .dot-green {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #16A34A;
+    box-shadow: 0 0 0 2px rgba(22,163,74,.18);
+    flex-shrink: 0;
   }
 
-  /* ── Hero Welcome Card ── */
+  /* Governance badge */
+  .gov-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--cvs-red-tint);
+    border: 1px solid var(--cvs-red-border);
+    border-radius: 20px;
+    padding: 4px 11px;
+    font-size: 11px !important;
+    color: var(--cvs-red) !important;
+    font-family: var(--font-ui) !important;
+    font-weight: 600 !important;
+  }
+
+  /* ══════════════════════════════
+     WELCOME HERO CARD
+  ══════════════════════════════ */
   .welcome-card {
-    background: linear-gradient(135deg, var(--cvs-red) 0%, var(--cvs-red-deep) 100%);
-    border-radius: var(--radius-lg);
-    padding: 28px 28px 28px 28px;
-    margin-bottom: 24px;
+    background: linear-gradient(130deg, #CC0000 0%, #8B0000 100%);
+    border-radius: var(--r-lg);
+    padding: 24px 26px;
+    margin-bottom: 22px;
     display: flex;
     align-items: center;
-    gap: 20px;
-    box-shadow: 0 6px 32px rgba(180,0,0,.22), 0 1px 4px rgba(180,0,0,.14);
+    gap: 18px;
+    box-shadow: var(--shadow-red-lg);
     position: relative;
     overflow: hidden;
   }
   .welcome-card::before {
     content: '';
-    position: absolute;
-    top: -40px; right: -40px;
-    width: 160px; height: 160px;
+    position: absolute; top: -50px; right: -50px;
+    width: 180px; height: 180px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.055);
   }
   .welcome-card::after {
     content: '';
-    position: absolute;
-    bottom: -30px; right: 60px;
-    width: 100px; height: 100px;
+    position: absolute; bottom: -25px; right: 80px;
+    width: 90px; height: 90px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.04);
+    background: rgba(255,255,255,0.035);
   }
-  .welcome-avatar {
-    width: 52px; height: 52px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.18);
-    border: 2px solid rgba(255,255,255,0.35);
+  .avatar-circle {
+    width: 50px; height: 50px; border-radius: 50%;
+    background: rgba(255,255,255,0.16);
+    border: 2px solid rgba(255,255,255,0.32);
     display: flex; align-items: center; justify-content: center;
     color: #fff !important;
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    font-family: var(--font-body) !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    font-family: var(--font-ui) !important;
     flex-shrink: 0;
-    backdrop-filter: blur(4px);
   }
   .welcome-name {
     font-family: var(--font-display) !important;
-    font-size: 22px !important;
+    font-size: 21px !important;
     color: #fff !important;
-    margin: 0 0 4px !important;
+    margin: 0 0 3px !important;
     line-height: 1.2;
   }
   .welcome-sub {
-    font-size: 13px !important;
-    color: rgba(255,255,255,0.72) !important;
+    font-size: 12.5px !important;
+    color: rgba(255,255,255,0.68) !important;
     margin: 0 !important;
     font-weight: 400 !important;
   }
 
-  /* ── Metric Cards ── */
+  /* ══════════════════════════════
+     PRESCRIPTION METRIC CARDS
+  ══════════════════════════════ */
+  .rx-section-label {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--text-muted) !important;
+    margin: 0 0 10px !important;
+    font-family: var(--font-ui) !important;
+  }
   [data-testid="stMetric"] {
     background: var(--bg-surface) !important;
-    border: 1px solid var(--border-base) !important;
-    border-radius: var(--radius-md) !important;
-    padding: 18px 20px !important;
-    box-shadow: var(--shadow-card) !important;
-    transition: box-shadow 0.2s, border-color 0.2s;
+    border: 1px solid var(--border-light) !important;
+    border-radius: var(--r-md) !important;
+    padding: 16px 18px !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: box-shadow 0.18s, border-color 0.18s;
   }
   [data-testid="stMetric"]:hover {
-    box-shadow: var(--shadow-lift) !important;
+    box-shadow: var(--shadow-md) !important;
     border-color: var(--cvs-red-border) !important;
   }
   [data-testid="stMetricLabel"] p {
-    font-size: 10.5px !important;
+    font-size: 10px !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.1em !important;
+    letter-spacing: 0.11em !important;
     color: var(--text-muted) !important;
-    font-weight: 600 !important;
-    font-family: var(--font-body) !important;
+    font-weight: 700 !important;
   }
   [data-testid="stMetricValue"] {
-    font-size: 26px !important;
+    font-size: 24px !important;
     font-weight: 600 !important;
     color: var(--text-primary) !important;
     font-family: var(--font-display) !important;
     letter-spacing: -0.02em !important;
   }
   [data-testid="stMetricDelta"] {
+    background: var(--cvs-red-tint) !important;
     color: var(--cvs-red) !important;
-    font-size: 11px !important;
-    font-weight: 500 !important;
-    font-family: var(--font-body) !important;
-    background: #FFF1F1;
-    padding: 2px 7px;
-    border-radius: 20px;
-    display: inline-block;
+    font-size: 10.5px !important;
+    font-weight: 600 !important;
+    padding: 2px 8px !important;
+    border-radius: 20px !important;
+    display: inline-block !important;
   }
 
-  /* ── Info / Alert boxes ── */
+  /* ══════════════════════════════
+     INFO / ALERT
+  ══════════════════════════════ */
   .stAlert {
     background: var(--bg-muted) !important;
-    border: 1px solid var(--border-base) !important;
+    border: 1px solid var(--border-light) !important;
     border-left: 3px solid var(--cvs-red) !important;
-    border-radius: var(--radius-md) !important;
-    font-size: 13px !important;
+    border-radius: var(--r-sm) !important;
+    font-size: 12.5px !important;
     box-shadow: none !important;
   }
-  .stAlert p {
-    color: var(--text-secondary) !important;
-    font-family: var(--font-body) !important;
-  }
+  .stAlert p { color: var(--text-secondary) !important; }
 
-  /* ── Buttons — Primary ── */
+  /* ══════════════════════════════
+     BUTTONS — PRIMARY
+  ══════════════════════════════ */
   .stButton > button {
     background: var(--cvs-red) !important;
     color: #ffffff !important;
     border: none !important;
-    border-radius: var(--radius-sm) !important;
+    border-radius: var(--r-sm) !important;
     padding: 11px 22px !important;
-    font-family: var(--font-body) !important;
+    font-family: var(--font-ui) !important;
     font-size: 13.5px !important;
     font-weight: 500 !important;
-    letter-spacing: 0.01em;
     width: 100%;
-    box-shadow: 0 2px 8px rgba(180,0,0,.20) !important;
-    transition: background 0.15s, box-shadow 0.15s, transform 0.1s !important;
+    box-shadow: var(--shadow-red) !important;
+    transition: background 0.14s, box-shadow 0.14s, transform 0.1s !important;
+    letter-spacing: 0.01em;
   }
   .stButton > button:hover {
-    background: var(--cvs-red-rich) !important;
-    box-shadow: 0 4px 16px rgba(180,0,0,.28) !important;
+    background: var(--cvs-red-hover) !important;
+    box-shadow: var(--shadow-red-lg) !important;
     transform: translateY(-1px);
   }
   .stButton > button:active {
@@ -321,150 +326,175 @@ st.markdown("""
     transform: translateY(0);
   }
 
-  /* ── Buttons — Ghost ── */
+  /* BUTTONS — GHOST */
   .ghost-btn .stButton > button {
     background: var(--bg-surface) !important;
     color: var(--text-secondary) !important;
-    border: 1px solid var(--border-base) !important;
-    box-shadow: var(--shadow-card) !important;
+    border: 1px solid var(--border-light) !important;
+    box-shadow: var(--shadow-xs) !important;
     width: auto !important;
-    padding: 7px 16px !important;
-    font-size: 12.5px !important;
+    padding: 7px 15px !important;
+    font-size: 12px !important;
     font-weight: 400 !important;
   }
   .ghost-btn .stButton > button:hover {
     background: var(--bg-muted) !important;
-    border-color: var(--border-strong) !important;
-    box-shadow: var(--shadow-lift) !important;
+    border-color: var(--border-med) !important;
+    box-shadow: var(--shadow-sm) !important;
     transform: translateY(-1px);
   }
 
-  /* ── Chat Messages ── */
+  /* ══════════════════════════════
+     CHAT MESSAGES  ← key focus
+  ══════════════════════════════ */
+
+  /* Outer wrapper */
   [data-testid="stChatMessage"] {
     background: var(--bg-surface) !important;
-    border: 1px solid var(--border-base) !important;
-    border-radius: var(--radius-md) !important;
-    box-shadow: var(--shadow-card) !important;
-    padding: 16px 20px !important;
-    margin-bottom: 8px !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: var(--r-md) !important;
+    box-shadow: var(--shadow-sm) !important;
+    padding: 14px 18px !important;
+    margin-bottom: 10px !important;
     transition: box-shadow 0.15s;
   }
   [data-testid="stChatMessage"]:hover {
-    box-shadow: var(--shadow-lift) !important;
+    box-shadow: var(--shadow-md) !important;
   }
+
+  /* ALL text inside ANY chat bubble — high-contrast, large, readable */
+  [data-testid="stChatMessage"] *,
   [data-testid="stChatMessage"] p,
   [data-testid="stChatMessage"] span,
   [data-testid="stChatMessage"] div,
   [data-testid="stChatMessage"] li,
   [data-testid="stChatMessage"] strong,
-  [data-testid="stChatMessage"] em {
-    color: var(--text-primary) !important;
-    font-size: 14px !important;
-    font-family: var(--font-body) !important;
-    line-height: 1.65 !important;
+  [data-testid="stChatMessage"] em,
+  [data-testid="stChatMessage"] code,
+  [data-testid="stChatMessage"] blockquote {
+    color: #18100E !important;           /* explicit dark, no variable fallback */
+    font-family: var(--font-ui) !important;
+    font-size: 14.5px !important;
+    line-height: 1.7 !important;
   }
 
-  /* ── Chat Input ── */
+  /* Bold text in messages — still very readable */
+  [data-testid="stChatMessage"] strong {
+    font-weight: 600 !important;
+    color: #18100E !important;
+  }
+
+  /* Italic / tip line */
+  [data-testid="stChatMessage"] em {
+    color: var(--text-secondary) !important;
+    font-style: italic;
+  }
+
+  /* Inline code */
+  [data-testid="stChatMessage"] code {
+    background: var(--bg-inset) !important;
+    border-radius: 4px !important;
+    padding: 1px 5px !important;
+    font-size: 13px !important;
+    color: var(--cvs-red-deep) !important;
+  }
+
+  /* Avatar icon in chat message rows */
+  [data-testid="stChatMessage"] [data-testid="chatAvatarIcon-assistant"] svg,
+  [data-testid="stChatMessage"] [data-testid="chatAvatarIcon-user"] svg {
+    color: var(--cvs-red) !important;
+    fill: var(--cvs-red) !important;
+  }
+
+  /* ══════════════════════════════
+     CHAT INPUT BAR
+  ══════════════════════════════ */
   [data-testid="stChatInput"] > div {
     background: var(--bg-surface) !important;
-    border: 1.5px solid var(--border-base) !important;
-    border-radius: var(--radius-md) !important;
-    box-shadow: var(--shadow-card) !important;
+    border: 1.5px solid var(--border-light) !important;
+    border-radius: var(--r-md) !important;
+    box-shadow: var(--shadow-sm) !important;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
   [data-testid="stChatInput"] > div:focus-within {
     border-color: var(--cvs-red) !important;
-    box-shadow: 0 0 0 3px rgba(204,0,0,0.08), var(--shadow-card) !important;
+    box-shadow: 0 0 0 3px var(--cvs-red-ring), var(--shadow-sm) !important;
   }
   [data-testid="stChatInput"] textarea {
     background: transparent !important;
     color: var(--text-primary) !important;
-    font-family: var(--font-body) !important;
+    font-family: var(--font-ui) !important;
     font-size: 14px !important;
     caret-color: var(--cvs-red) !important;
   }
   [data-testid="stChatInput"] textarea::placeholder {
     color: var(--text-muted) !important;
+    font-size: 13.5px !important;
   }
   [data-testid="stChatInput"] button {
     background: var(--cvs-red) !important;
-    border-radius: var(--radius-sm) !important;
-    transition: background 0.15s !important;
+    border-radius: var(--r-xs) !important;
   }
   [data-testid="stChatInput"] button:hover {
-    background: var(--cvs-red-rich) !important;
+    background: var(--cvs-red-hover) !important;
   }
 
-  /* ── Divider ── */
-  hr { border-color: var(--border-base) !important; margin: 20px 0 !important; }
-
-  /* ── Spinner ── */
+  /* ══════════════════════════════
+     MISC
+  ══════════════════════════════ */
+  hr { border-color: var(--border-light) !important; margin: 18px 0 !important; }
   .stSpinner > div { border-top-color: var(--cvs-red) !important; }
-
-  /* ── Section Label ── */
-  .section-label {
-    font-size: 10.5px !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-muted) !important;
-    margin: 0 0 12px !important;
-    font-family: var(--font-body) !important;
-  }
+  .stSpinner p { color: var(--text-secondary) !important; font-size: 13px !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Subtle warm-toned watermark layer ──
+# ── Warm watermark layer ──
 st.markdown("""
 <div style="position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;">
-
-  <!-- Pharmacy cross — large, top right, very subtle -->
-  <svg style="position:absolute;top:-80px;right:-80px;opacity:0.03;"
-       width="340" height="340" viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg">
+  <svg style="position:absolute;top:-90px;right:-90px;opacity:0.025;"
+       width="380" height="380" viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg">
     <rect x="87" y="0" width="86" height="260" rx="12" fill="#CC0000"/>
     <rect x="0" y="87" width="260" height="86" rx="12" fill="#CC0000"/>
   </svg>
-
-  <!-- ECG line — bottom strip -->
-  <svg style="position:absolute;bottom:18%;left:0;width:100%;opacity:0.04;"
-       height="60" viewBox="0 0 900 60" xmlns="http://www.w3.org/2000/svg">
-    <polyline
-      points="0,30 180,30 200,30 210,5 220,55 230,5 240,55 250,30 370,30 900,30"
-      fill="none" stroke="#CC0000" stroke-width="2"
-      stroke-linecap="round" stroke-linejoin="round"/>
+  <svg style="position:absolute;bottom:16%;left:0;width:100%;opacity:0.035;"
+       height="56" viewBox="0 0 900 56" xmlns="http://www.w3.org/2000/svg">
+    <polyline points="0,28 175,28 195,28 205,4 215,52 225,4 235,52 245,28 360,28 900,28"
+      fill="none" stroke="#CC0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
-
-  <!-- Rx mark — bottom left -->
-  <svg style="position:absolute;bottom:40px;left:24px;opacity:0.04;"
-       width="90" height="48" viewBox="0 0 110 58" xmlns="http://www.w3.org/2000/svg">
+  <svg style="position:absolute;bottom:36px;left:22px;opacity:0.04;"
+       width="84" height="46" viewBox="0 0 110 58" xmlns="http://www.w3.org/2000/svg">
     <text x="0" y="52" font-family="Georgia,serif" font-size="60" fill="#CC0000">Rx</text>
   </svg>
-
-  <!-- Pill — lower right -->
-  <svg style="position:absolute;bottom:80px;right:40px;opacity:0.04;transform:rotate(-22deg);"
-       width="90" height="36" viewBox="0 0 110 44" xmlns="http://www.w3.org/2000/svg">
+  <svg style="position:absolute;bottom:72px;right:36px;opacity:0.04;transform:rotate(-20deg);"
+       width="86" height="34" viewBox="0 0 110 44" xmlns="http://www.w3.org/2000/svg">
     <rect x="0" y="0" width="110" height="44" rx="22" fill="#CC0000"/>
-    <rect x="53" y="0" width="4" height="44" fill="#FAFAF9" opacity="0.6"/>
+    <rect x="53" y="0" width="3" height="44" fill="#F7F4F2" opacity="0.6"/>
   </svg>
-
 </div>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# 4. RAG & Embedding Helpers
+# 4. ChromaDB Helper
 # -----------------------------
 @st.cache_resource
-# Replace your current retrieve_context and load_embedder with this
-def get_embedding(text, model="text-embedding-3-small"):
+def load_chroma_collection():
+    client = chromadb.PersistentClient(path=CHROMA_DIR)
+    return client.get_or_create_collection(name=COLLECTION_NAME)
+
+# -----------------------------
+# 5. OpenAI Embedding + RAG
+# -----------------------------
+def get_embedding(text: str, model: str = "text-embedding-3-small") -> list:
+    """Generate an embedding vector using OpenAI."""
     client = OpenAI(api_key=OPENAI_KEY)
     text = text.replace("\n", " ")
     return client.embeddings.create(input=[text], model=model).data[0].embedding
 
-def retrieve_context(query: str, top_k: int = 2):
+def retrieve_context(query: str, top_k: int = 2) -> str:
+    """Retrieves patient context from ChromaDB using an OpenAI embedding."""
     try:
         collection = load_chroma_collection()
-        # Use OpenAI instead of SentenceTransformer
-        q_emb = get_embedding(query) 
+        q_emb = get_embedding(query)
         results = collection.query(query_embeddings=[q_emb], n_results=top_k)
         docs = results.get("documents", [[]])[0]
         return "\n".join(docs) if docs else "No records found."
@@ -472,10 +502,10 @@ def retrieve_context(query: str, top_k: int = 2):
         return f"Retrieval Error: {str(e)}"
 
 # -----------------------------
-# 5. CalypsoAI Governance Call
+# 6. CalypsoAI Governance Call
 # -----------------------------
-def calypso_send(text: str):
-    """Sends prompt through the CalypsoAI Shield."""
+def calypso_send(text: str) -> dict:
+    """Sends the prompt through the CalypsoAI Shield and returns the response."""
     headers = {
         "Authorization": f"Bearer {CALYPSO_TOKEN}",
         "Content-Type": "application/json",
@@ -488,28 +518,28 @@ def calypso_send(text: str):
         return {"error": str(e)}
 
 # -----------------------------
-# 6. Session State Init
+# 7. Session State Init
 # -----------------------------
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
 # ══════════════════════════════
-# 7. PAGE 1 — Home Dashboard
+# 8. PAGE 1 — Home Dashboard
 # ══════════════════════════════
 if st.session_state.page == "home":
 
     st.markdown("""
     <div class="top-bar">
-      <div class="top-bar-inner">
-        <div class="top-bar-logo">
-          <span class="cvs-wordmark">CVS</span>
+      <div class="nav-inner">
+        <div class="nav-left">
+          <span class="cvs-mark">CVS</span>
           <div>
-            <p class="top-bar-title">Secure AI Portal</p>
-            <p class="top-bar-sub">Patient Health Assistant · CalypsoAI Governed</p>
+            <p class="nav-title">Secure AI Portal</p>
+            <p class="nav-sub">Patient Health Assistant · CalypsoAI Governed</p>
           </div>
         </div>
-        <div class="top-bar-right">
-          <span class="status-pill"><span class="status-dot"></span>Systems Active</span>
+        <div class="nav-right">
+          <span class="status-pill"><span class="dot-green"></span>Systems Active</span>
           <span class="gov-badge">🛡️ Governance On</span>
         </div>
       </div>
@@ -518,7 +548,7 @@ if st.session_state.page == "home":
 
     st.markdown("""
     <div class="welcome-card">
-      <div class="welcome-avatar">BS</div>
+      <div class="avatar-circle">BS</div>
       <div>
         <h2 class="welcome-name">Good morning, Brenda.</h2>
         <p class="welcome-sub">Here's your prescription summary for today</p>
@@ -526,7 +556,7 @@ if st.session_state.page == "home":
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<p class="section-label">Active Prescriptions</p>', unsafe_allow_html=True)
+    st.markdown('<p class="rx-section-label">Active Prescriptions</p>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Metformin", "60 tabs", "Due May 15")
@@ -541,22 +571,22 @@ if st.session_state.page == "home":
         st.rerun()
 
 # ══════════════════════════════
-# 8. PAGE 2 — Secure Chat
+# 9. PAGE 2 — Secure Chat
 # ══════════════════════════════
 elif st.session_state.page == "chat":
 
     st.markdown("""
     <div class="top-bar">
-      <div class="top-bar-inner">
-        <div class="top-bar-logo">
-          <span class="cvs-wordmark">CVS</span>
+      <div class="nav-inner">
+        <div class="nav-left">
+          <span class="cvs-mark">CVS</span>
           <div>
-            <p class="top-bar-title">Secure Clinical Assistant</p>
-            <p class="top-bar-sub">ChromaDB + CalypsoAI · Focused on your health records</p>
+            <p class="nav-title">Secure Clinical Assistant</p>
+            <p class="nav-sub">ChromaDB · OpenAI Embeddings · CalypsoAI Shield</p>
           </div>
         </div>
-        <div class="top-bar-right">
-          <span class="status-pill"><span class="status-dot"></span>Ready</span>
+        <div class="nav-right">
+          <span class="status-pill"><span class="dot-green"></span>Ready</span>
           <span class="gov-badge">🛡️ Governance On</span>
         </div>
       </div>
@@ -585,9 +615,9 @@ elif st.session_state.page == "chat":
                 "role": "assistant",
                 "content": (
                     "👋 Hello, Brenda! How can I help you today?\n\n"
-                    "Ask me about your prescriptions, refill dates, dosage instructions, "
-                    "or any medication questions.\n\n"
-                    "*Tip: Shift+Enter for a new line.*"
+                    "Ask me about your **prescriptions**, **refill dates**, **dosage instructions**, "
+                    "or any other medication questions.\n\n"
+                    "*Tip: Press Shift + Enter for a new line.*"
                 )
             }
         ]
@@ -597,11 +627,11 @@ elif st.session_state.page == "chat":
         with st.chat_message(m["role"]):
             st.markdown(m["content"])
 
-    # Native bottom-anchored chat input
+    # Bottom-anchored chat input
     if prompt := st.chat_input("Ask about your medications, refills, or dosage…"):
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        with st.spinner("Checking safety protocols…"):
+        with st.spinner("Checking governance shield…"):
             response_data = calypso_send(prompt)
 
             if response_data:
@@ -627,9 +657,9 @@ elif st.session_state.page == "chat":
                                 {
                                     "role": "system",
                                     "content": (
-                                        "You are a friendly and knowledgeable CVS Pharmacist. "
+                                        "You are a friendly, knowledgeable CVS Pharmacist. "
                                         "Use the patient context below to answer accurately and safely. "
-                                        "Be concise and clear.\n\n"
+                                        "Be concise and clear. Never speculate about medical diagnoses.\n\n"
                                         f"Patient Context:\n{context}"
                                     )
                                 },
