@@ -2,7 +2,6 @@ import os
 import streamlit as st
 import requests
 import chromadb
-from sentence_transformers import SentenceTransformer
 from openai import OpenAI
 from dotenv import load_dotenv
 
