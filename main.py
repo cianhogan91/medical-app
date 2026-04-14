@@ -1,21 +1,24 @@
 import os
 import streamlit as st
-import requests
-import chromadb
-from openai import OpenAI
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # -----------------------------
 # 1. Configuration & Secrets
 # -----------------------------
+
+# 1. This looks for a .env file locally. On Render, it does nothing (which is fine).
 load_dotenv()
 
+# 2. os.getenv automatically checks Render's Environment Variables dashboard.
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 CALYPSO_TOKEN = os.getenv("CALYPSOAI_TOKEN")
 
+# 3. Double check if variables loaded
 if not OPENAI_KEY or not CALYPSO_TOKEN:
-    st.error("Missing Secrets! Ensure OPENAI_API_KEY and CALYPSOAI_TOKEN are set in your .env file.")
+    st.error("Missing API Keys! Ensure they are set in Render's Environment Variables.")
     st.stop()
+
 
 PROJECT_ID = "019d532d-231c-70b4-a1b6-28f103b1e3ca"
 API_URL = "https://us1.calypsoai.app/backend/v1/prompts"
@@ -409,6 +412,11 @@ st.markdown("""
   /* ══════════════════════════════
      CHAT INPUT BAR
   ══════════════════════════════ */
+            [data-testid="stChatInput"] {
+    bottom: 50px !important; /* Adjust this number to lift it higher */
+    background-color: transparent !important;
+    z-index: 1000 !important;
+  }
   [data-testid="stChatInput"] > div {
     background: var(--bg-surface) !important;
     border: 1.5px solid var(--border-light) !important;
