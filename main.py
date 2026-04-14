@@ -455,20 +455,17 @@ st.markdown("""
 # 4. RAG & Embedding Helpers
 # -----------------------------
 @st.cache_resource
-def load_embedder():
-    return SentenceTransformer(EMBEDDING_MODEL)
-
-@st.cache_resource
-def load_chroma_collection():
-    client = chromadb.PersistentClient(path=CHROMA_DIR)
-    return client.get_or_create_collection(name=COLLECTION_NAME)
+# Replace your current retrieve_context and load_embedder with this
+def get_embedding(text, model="text-embedding-3-small"):
+    client = OpenAI(api_key=OPENAI_KEY)
+    text = text.replace("\n", " ")
+    return client.embeddings.create(input=[text], model=model).data[0].embedding
 
 def retrieve_context(query: str, top_k: int = 2):
-    """Retrieves patient context from ChromaDB using vector search."""
     try:
         collection = load_chroma_collection()
-        model = load_embedder()
-        q_emb = model.encode([query])[0].tolist()
+        # Use OpenAI instead of SentenceTransformer
+        q_emb = get_embedding(query) 
         results = collection.query(query_embeddings=[q_emb], n_results=top_k)
         docs = results.get("documents", [[]])[0]
         return "\n".join(docs) if docs else "No records found."
