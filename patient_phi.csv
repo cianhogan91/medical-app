@@ -1,0 +1,4 @@
+patient_id,name,diagnosis,prescription,amount,next_due,notes
+pat_001,Brenda Scott,Type 2 Diabetes,Metformin 500mg,60 tabs,2026-05-15,Patient reports mild nausea.
+pat_002,John Doe,Hypertension,Lisinopril 10mg,30 tabs,2026-04-20,Monitor for dry cough.
+pat_003,Jane Smith,Chronic Pain,Oxycodone 5mg,20 tabs,2026-04-10,HIGH RISK - Monitor for dependency.
