@@ -4,19 +4,16 @@ import requests
 import chromadb
 from sentence_transformers import SentenceTransformer
 from openai import OpenAI
-from dotenv import load_dotenv  # <--- New Import
+from dotenv import load_dotenv
 
 # -----------------------------
 # 1. Configuration & Secrets
 # -----------------------------
-# Load variables from .env file into the environment
-load_dotenv() 
+load_dotenv()
 
-# Retrieve keys using os.getenv
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 CALYPSO_TOKEN = os.getenv("CALYPSOAI_TOKEN")
 
-# Verify the keys exist
 if not OPENAI_KEY or not CALYPSO_TOKEN:
     st.error("Missing Secrets! Ensure OPENAI_API_KEY and CALYPSOAI_TOKEN are set in your .env file.")
     st.stop()
@@ -35,165 +32,326 @@ SECURITY_BLOCK_MSG = "🚨 **SECURITY ALERT:** This request was blocked by CVS P
 st.set_page_config(page_title="CVS Secure AI Portal", layout="centered")
 
 # -----------------------------
-# 3. Global Dark Theme Styles
+# 3. Professional CVS Theme
 # -----------------------------
 st.markdown("""
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Serif+Display:ital@0;1&display=swap');
 
-  /* Base */
+  /* ── CSS Tokens ── */
+  :root {
+    --cvs-red:        #CC0000;
+    --cvs-red-deep:   #9B0000;
+    --cvs-red-rich:   #B30000;
+    --cvs-red-soft:   #E8000010;
+    --cvs-red-border: #CC000028;
+
+    --bg-base:        #FAFAF9;
+    --bg-surface:     #FFFFFF;
+    --bg-muted:       #F5F2F0;
+    --bg-inset:       #EDE9E6;
+
+    --text-primary:   #1A1210;
+    --text-secondary: #5C4F4A;
+    --text-muted:     #9C8D87;
+    --text-on-red:    #FFFFFF;
+
+    --border-base:    #E2DBD8;
+    --border-strong:  #C9BCB8;
+
+    --shadow-card:    0 1px 3px rgba(80,30,20,.06), 0 4px 16px rgba(80,30,20,.08);
+    --shadow-lift:    0 4px 24px rgba(80,30,20,.12);
+
+    --radius-sm:  6px;
+    --radius-md:  10px;
+    --radius-lg:  16px;
+    --radius-xl:  24px;
+
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body:    'DM Sans', system-ui, sans-serif;
+  }
+
+  /* ── Reset & Base ── */
   .stApp {
-    background-color: #0d1117 !important;
-    font-family: 'Inter', sans-serif !important;
-    color: #e6edf3 !important;
+    background: var(--bg-base) !important;
+    font-family: var(--font-body) !important;
+    color: var(--text-primary) !important;
   }
   .block-container {
-    max-width: 780px !important;
+    max-width: 760px !important;
     padding-top: 0 !important;
-    padding-bottom: 6rem !important;
+    padding-bottom: 7rem !important;
   }
 
-  /* Hide default Streamlit chrome */
-  header[data-testid="stHeader"] { display: none !important; }
-  footer { display: none !important; }
+  /* Hide Streamlit chrome */
+  header[data-testid="stHeader"],
+  footer,
   #MainMenu { display: none !important; }
 
-  /* All base text light */
-  p, span, div, li, label { color: #e6edf3 !important; font-family: 'Inter', sans-serif !important; }
-  h1, h2, h3 { color: #e6edf3 !important; font-family: 'Inter', sans-serif !important; }
+  /* Universal text reset */
+  p, span, div, li, label {
+    color: var(--text-primary) !important;
+    font-family: var(--font-body) !important;
+  }
+  h1, h2, h3 {
+    color: var(--text-primary) !important;
+    font-family: var(--font-display) !important;
+  }
 
-  /* Sticky top bar */
+  /* ── Top Navigation Bar ── */
   .top-bar {
     position: sticky;
     top: 0;
-    z-index: 100;
-    background: #161b22;
-    border-bottom: 1px solid #30363d;
-    padding: 14px 0 12px;
-    margin-bottom: 24px;
+    z-index: 200;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-base);
+    padding: 0;
+    margin-bottom: 32px;
   }
   .top-bar-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 14px 4px;
+  }
+  .top-bar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cvs-wordmark {
+    background: var(--cvs-red);
+    color: #fff !important;
+    font-family: var(--font-body) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.12em;
+    padding: 4px 10px;
+    border-radius: 4px;
+    line-height: 1;
   }
   .top-bar-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #e6edf3 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-body) !important;
+    margin: 0 !important;
+    letter-spacing: -0.01em;
+  }
+  .top-bar-sub {
+    font-size: 11px !important;
+    color: var(--text-muted) !important;
+    margin: 2px 0 0 !important;
+    letter-spacing: 0.02em;
+  }
+  .top-bar-right {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 0 0 3px;
   }
-  .top-bar-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: #cc0000;
-    display: inline-block;
-    flex-shrink: 0;
-  }
-  .top-bar-sub {
-    font-size: 12px !important;
-    color: #8b949e !important;
-    margin: 0 !important;
-  }
-  .top-bar-right { display: flex; align-items: center; gap: 8px; }
 
-  /* Status pill */
+  /* ── Pills & Badges ── */
   .status-pill {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #1c2128;
-    border: 1px solid #30363d;
+    background: var(--bg-muted);
+    border: 1px solid var(--border-base);
     border-radius: 20px;
     padding: 5px 12px;
-    font-size: 12px !important;
-    color: #8b949e !important;
+    font-size: 11.5px !important;
+    color: var(--text-secondary) !important;
+    font-family: var(--font-body) !important;
+    font-weight: 500 !important;
   }
   .status-dot {
     width: 7px; height: 7px;
     border-radius: 50%;
-    background: #3fb950;
+    background: #22C55E;
+    box-shadow: 0 0 0 2px #22C55E30;
+    flex-shrink: 0;
   }
-
-  /* Governance badge */
-  .gov-label {
+  .gov-badge {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    background: #1c2128;
-    border: 1px solid #30363d;
+    background: #FFF1F1;
+    border: 1px solid var(--cvs-red-border);
     border-radius: 20px;
-    padding: 4px 10px;
-    font-size: 11px !important;
-    color: #cc4444 !important;
+    padding: 5px 12px;
+    font-size: 11.5px !important;
+    color: var(--cvs-red) !important;
+    font-family: var(--font-body) !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.01em;
   }
 
-  /* Metric / Prescription cards */
+  /* ── Hero Welcome Card ── */
+  .welcome-card {
+    background: linear-gradient(135deg, var(--cvs-red) 0%, var(--cvs-red-deep) 100%);
+    border-radius: var(--radius-lg);
+    padding: 28px 28px 28px 28px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 6px 32px rgba(180,0,0,.22), 0 1px 4px rgba(180,0,0,.14);
+    position: relative;
+    overflow: hidden;
+  }
+  .welcome-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+  }
+  .welcome-card::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; right: 60px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .welcome-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    border: 2px solid rgba(255,255,255,0.35);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    font-family: var(--font-body) !important;
+    flex-shrink: 0;
+    backdrop-filter: blur(4px);
+  }
+  .welcome-name {
+    font-family: var(--font-display) !important;
+    font-size: 22px !important;
+    color: #fff !important;
+    margin: 0 0 4px !important;
+    line-height: 1.2;
+  }
+  .welcome-sub {
+    font-size: 13px !important;
+    color: rgba(255,255,255,0.72) !important;
+    margin: 0 !important;
+    font-weight: 400 !important;
+  }
+
+  /* ── Metric Cards ── */
   [data-testid="stMetric"] {
-    background: #161b22 !important;
-    border: 1px solid #30363d !important;
-    border-radius: 10px !important;
-    padding: 16px 18px !important;
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-base) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 18px 20px !important;
+    box-shadow: var(--shadow-card) !important;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+  [data-testid="stMetric"]:hover {
+    box-shadow: var(--shadow-lift) !important;
+    border-color: var(--cvs-red-border) !important;
   }
   [data-testid="stMetricLabel"] p {
-    font-size: 11px !important;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: #8b949e !important;
+    font-size: 10.5px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    color: var(--text-muted) !important;
+    font-weight: 600 !important;
+    font-family: var(--font-body) !important;
   }
   [data-testid="stMetricValue"] {
-    font-size: 24px !important;
+    font-size: 26px !important;
     font-weight: 600 !important;
-    color: #e6edf3 !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-display) !important;
+    letter-spacing: -0.02em !important;
   }
-  [data-testid="stMetricDelta"] { color: #cc0000 !important; font-size: 12px !important; }
+  [data-testid="stMetricDelta"] {
+    color: var(--cvs-red) !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    font-family: var(--font-body) !important;
+    background: #FFF1F1;
+    padding: 2px 7px;
+    border-radius: 20px;
+    display: inline-block;
+  }
 
-  /* Info/Alert boxes */
+  /* ── Info / Alert boxes ── */
   .stAlert {
-    background: #1c2128 !important;
-    border: 1px solid #30363d !important;
-    border-radius: 8px !important;
+    background: var(--bg-muted) !important;
+    border: 1px solid var(--border-base) !important;
+    border-left: 3px solid var(--cvs-red) !important;
+    border-radius: var(--radius-md) !important;
     font-size: 13px !important;
+    box-shadow: none !important;
   }
-  .stAlert p { color: #8b949e !important; }
+  .stAlert p {
+    color: var(--text-secondary) !important;
+    font-family: var(--font-body) !important;
+  }
 
-  /* Primary buttons */
+  /* ── Buttons — Primary ── */
   .stButton > button {
-    background: #cc0000 !important;
+    background: var(--cvs-red) !important;
     color: #ffffff !important;
     border: none !important;
-    border-radius: 6px !important;
-    padding: 10px 20px !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 13px !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 11px 22px !important;
+    font-family: var(--font-body) !important;
+    font-size: 13.5px !important;
     font-weight: 500 !important;
+    letter-spacing: 0.01em;
     width: 100%;
-    transition: background 0.15s;
+    box-shadow: 0 2px 8px rgba(180,0,0,.20) !important;
+    transition: background 0.15s, box-shadow 0.15s, transform 0.1s !important;
   }
-  .stButton > button:hover { background: #a80000 !important; }
+  .stButton > button:hover {
+    background: var(--cvs-red-rich) !important;
+    box-shadow: 0 4px 16px rgba(180,0,0,.28) !important;
+    transform: translateY(-1px);
+  }
+  .stButton > button:active {
+    background: var(--cvs-red-deep) !important;
+    transform: translateY(0);
+  }
 
-  /* Secondary / ghost buttons */
+  /* ── Buttons — Ghost ── */
   .ghost-btn .stButton > button {
-    background: #21262d !important;
-    color: #c9d1d9 !important;
-    border: 1px solid #30363d !important;
+    background: var(--bg-surface) !important;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border-base) !important;
+    box-shadow: var(--shadow-card) !important;
     width: auto !important;
-    padding: 6px 14px !important;
-    font-size: 12px !important;
+    padding: 7px 16px !important;
+    font-size: 12.5px !important;
+    font-weight: 400 !important;
   }
-  .ghost-btn .stButton > button:hover { background: #30363d !important; }
+  .ghost-btn .stButton > button:hover {
+    background: var(--bg-muted) !important;
+    border-color: var(--border-strong) !important;
+    box-shadow: var(--shadow-lift) !important;
+    transform: translateY(-1px);
+  }
 
-  /* Chat messages */
+  /* ── Chat Messages ── */
   [data-testid="stChatMessage"] {
-    background: #161b22 !important;
-    border: 1px solid #30363d !important;
-    border-radius: 10px !important;
-    box-shadow: none !important;
-    padding: 14px 18px !important;
-    color: #e6edf3 !important;
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-base) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--shadow-card) !important;
+    padding: 16px 20px !important;
+    margin-bottom: 8px !important;
+    transition: box-shadow 0.15s;
+  }
+  [data-testid="stChatMessage"]:hover {
+    box-shadow: var(--shadow-lift) !important;
   }
   [data-testid="stChatMessage"] p,
   [data-testid="stChatMessage"] span,
@@ -201,118 +359,93 @@ st.markdown("""
   [data-testid="stChatMessage"] li,
   [data-testid="stChatMessage"] strong,
   [data-testid="stChatMessage"] em {
-    color: #e6edf3 !important;
+    color: var(--text-primary) !important;
     font-size: 14px !important;
+    font-family: var(--font-body) !important;
+    line-height: 1.65 !important;
   }
 
-  /* Native chat input — bottom of page */
+  /* ── Chat Input ── */
   [data-testid="stChatInput"] > div {
-    background: #161b22 !important;
-    border: 1px solid #30363d !important;
-    border-radius: 10px !important;
+    background: var(--bg-surface) !important;
+    border: 1.5px solid var(--border-base) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--shadow-card) !important;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  [data-testid="stChatInput"] > div:focus-within {
+    border-color: var(--cvs-red) !important;
+    box-shadow: 0 0 0 3px rgba(204,0,0,0.08), var(--shadow-card) !important;
   }
   [data-testid="stChatInput"] textarea {
-    background: #161b22 !important;
-    color: #e6edf3 !important;
-    font-family: 'Inter', sans-serif !important;
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-body) !important;
     font-size: 14px !important;
-    caret-color: #cc0000 !important;
+    caret-color: var(--cvs-red) !important;
   }
-  [data-testid="stChatInput"] textarea::placeholder { color: #8b949e !important; }
-  [data-testid="stChatInput"] button { background: #cc0000 !important; border-radius: 6px !important; }
-
-  /* Divider */
-  hr { border-color: #30363d !important; }
-
-  /* Spinner */
-  .stSpinner > div { border-top-color: #cc0000 !important; }
-
-  /* Home card */
-  .home-card {
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 12px;
-    padding: 22px 24px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
+  [data-testid="stChatInput"] textarea::placeholder {
+    color: var(--text-muted) !important;
   }
-  .home-card h2 {
-    font-size: 19px !important;
+  [data-testid="stChatInput"] button {
+    background: var(--cvs-red) !important;
+    border-radius: var(--radius-sm) !important;
+    transition: background 0.15s !important;
+  }
+  [data-testid="stChatInput"] button:hover {
+    background: var(--cvs-red-rich) !important;
+  }
+
+  /* ── Divider ── */
+  hr { border-color: var(--border-base) !important; margin: 20px 0 !important; }
+
+  /* ── Spinner ── */
+  .stSpinner > div { border-top-color: var(--cvs-red) !important; }
+
+  /* ── Section Label ── */
+  .section-label {
+    font-size: 10.5px !important;
     font-weight: 600 !important;
-    color: #e6edf3 !important;
-    margin: 0 0 3px !important;
-  }
-  .home-card .sub { font-size: 13px !important; color: #8b949e !important; margin: 0 !important; }
-  .avatar-circle {
-    width: 44px; height: 44px; border-radius: 50%;
-    background: #cc0000;
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 14px; font-weight: 600; flex-shrink: 0;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted) !important;
+    margin: 0 0 12px !important;
+    font-family: var(--font-body) !important;
   }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Health watermarks (fixed layer behind everything) ──
+# ── Subtle warm-toned watermark layer ──
 st.markdown("""
 <div style="position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;">
 
-  <!-- ECG / heartbeat line -->
-  <svg style="position:absolute;bottom:22%;left:0;width:100%;opacity:0.05;"
-       height="80" viewBox="0 0 900 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pharmacy cross — large, top right, very subtle -->
+  <svg style="position:absolute;top:-80px;right:-80px;opacity:0.03;"
+       width="340" height="340" viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg">
+    <rect x="87" y="0" width="86" height="260" rx="12" fill="#CC0000"/>
+    <rect x="0" y="87" width="260" height="86" rx="12" fill="#CC0000"/>
+  </svg>
+
+  <!-- ECG line — bottom strip -->
+  <svg style="position:absolute;bottom:18%;left:0;width:100%;opacity:0.04;"
+       height="60" viewBox="0 0 900 60" xmlns="http://www.w3.org/2000/svg">
     <polyline
-      points="0,40 140,40 170,40 183,6 196,74 209,6 222,74 235,40 310,40 900,40"
-      fill="none" stroke="#cc0000" stroke-width="2.5"
+      points="0,30 180,30 200,30 210,5 220,55 230,5 240,55 250,30 370,30 900,30"
+      fill="none" stroke="#CC0000" stroke-width="2"
       stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
 
-  <!-- Doctor silhouette — bottom right -->
-  <svg style="position:absolute;bottom:0;right:0;opacity:0.055;"
-       width="280" height="430" viewBox="0 0 300 460"
-       xmlns="http://www.w3.org/2000/svg" fill="#cc0000">
-    <ellipse cx="150" cy="62" rx="40" ry="46"/>
-    <rect x="130" y="102" width="40" height="26" rx="7"/>
-    <path d="M50 140 Q70 130 130 130 Q138 130 143 138 L150 158 L157 138 Q162 130 170 130 L230 130 Q265 140 248 178 L240 290 Q238 308 220 308 L80 308 Q62 308 60 290 Z"/>
-    <path d="M130 130 L105 178 L138 165 Z"/>
-    <path d="M170 130 L195 178 L162 165 Z"/>
-    <path d="M116 158 Q88 190 86 226 Q84 250 101 256 Q122 264 126 242 Q128 228 116 226 Q107 224 108 235"
-      stroke="#cc0000" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <circle cx="108" cy="240" r="9"/>
-    <path d="M230 142 Q266 160 272 212 Q276 240 260 245 L242 248 Q228 248 224 232 L218 196 Z"/>
-    <path d="M70 142 Q34 160 28 212 Q24 240 40 245 L58 248 Q72 248 76 232 L82 196 Z"/>
-    <rect x="14" y="238" width="46" height="58" rx="5"/>
-    <rect x="20" y="228" width="34" height="10" rx="4"/>
-    <rect x="22" y="250" width="30" height="3" rx="1"/>
-    <rect x="22" y="260" width="22" height="3" rx="1"/>
-    <rect x="22" y="270" width="26" height="3" rx="1"/>
-    <rect x="98" y="306" width="46" height="106" rx="9"/>
-    <rect x="156" y="306" width="46" height="106" rx="9"/>
-    <ellipse cx="121" cy="412" rx="30" ry="12"/>
-    <ellipse cx="179" cy="412" rx="30" ry="12"/>
-    <rect x="165" y="195" width="38" height="28" rx="5"/>
-    <rect x="178" y="190" width="5" height="18" rx="2"/>
-    <rect x="188" y="190" width="5" height="14" rx="2"/>
+  <!-- Rx mark — bottom left -->
+  <svg style="position:absolute;bottom:40px;left:24px;opacity:0.04;"
+       width="90" height="48" viewBox="0 0 110 58" xmlns="http://www.w3.org/2000/svg">
+    <text x="0" y="52" font-family="Georgia,serif" font-size="60" fill="#CC0000">Rx</text>
   </svg>
 
-  <!-- Pharmacy cross — top left -->
-  <svg style="position:absolute;top:-50px;left:-50px;opacity:0.04;"
-       width="260" height="260" viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg">
-    <rect x="87" y="0" width="86" height="260" rx="10" fill="#cc0000"/>
-    <rect x="0" y="87" width="260" height="86" rx="10" fill="#cc0000"/>
-  </svg>
-
-  <!-- Pill shape — top right -->
-  <svg style="position:absolute;top:70px;right:50px;opacity:0.05;transform:rotate(-28deg);"
-       width="110" height="44" viewBox="0 0 110 44" xmlns="http://www.w3.org/2000/svg">
-    <rect x="0" y="0" width="110" height="44" rx="22" fill="#cc0000"/>
-    <rect x="53" y="0" width="4" height="44" fill="#0d1117" opacity="0.4"/>
-  </svg>
-
-  <!-- Rx — bottom left -->
-  <svg style="position:absolute;bottom:50px;left:30px;opacity:0.05;"
-       width="110" height="58" viewBox="0 0 110 58" xmlns="http://www.w3.org/2000/svg">
-    <text x="0" y="52" font-family="Georgia,serif" font-size="60" fill="#cc0000">Rx</text>
+  <!-- Pill — lower right -->
+  <svg style="position:absolute;bottom:80px;right:40px;opacity:0.04;transform:rotate(-22deg);"
+       width="90" height="36" viewBox="0 0 110 44" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="110" height="44" rx="22" fill="#CC0000"/>
+    <rect x="53" y="0" width="4" height="44" fill="#FAFAF9" opacity="0.6"/>
   </svg>
 
 </div>
@@ -372,28 +505,32 @@ if st.session_state.page == "home":
     st.markdown("""
     <div class="top-bar">
       <div class="top-bar-inner">
-        <div>
-          <div class="top-bar-title"><span class="top-bar-dot"></span>CVS Secure AI Portal</div>
-          <p class="top-bar-sub">ChromaDB + CalypsoAI &bull; Patient Health Assistant</p>
+        <div class="top-bar-logo">
+          <span class="cvs-wordmark">CVS</span>
+          <div>
+            <p class="top-bar-title">Secure AI Portal</p>
+            <p class="top-bar-sub">Patient Health Assistant · CalypsoAI Governed</p>
+          </div>
         </div>
         <div class="top-bar-right">
-          <span class="status-pill"><span class="status-dot"></span>Active</span>
-          <span class="gov-label">🛡️ Governance On</span>
+          <span class="status-pill"><span class="status-dot"></span>Systems Active</span>
+          <span class="gov-badge">🛡️ Governance On</span>
         </div>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="home-card">
-      <div class="avatar-circle">BS</div>
+    <div class="welcome-card">
+      <div class="welcome-avatar">BS</div>
       <div>
-        <h2>Good morning, Brenda.</h2>
-        <p class="sub">Here's your prescription summary for today</p>
+        <h2 class="welcome-name">Good morning, Brenda.</h2>
+        <p class="welcome-sub">Here's your prescription summary for today</p>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
+    st.markdown('<p class="section-label">Active Prescriptions</p>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Metformin", "60 tabs", "Due May 15")
@@ -401,9 +538,9 @@ if st.session_state.page == "home":
         st.metric("Lisinopril", "30 tabs", "Due Apr 20")
 
     st.divider()
-    st.info("🔒 Your data is protected by CVS Secure AI Governance.")
+    st.info("🔒 Your health data is end-to-end protected by CVS Secure AI Governance. All queries are monitored and filtered in real time.")
 
-    if st.button("💬 Open Secure Clinical Chat"):
+    if st.button("💬  Open Secure Clinical Chat"):
         st.session_state.page = "chat"
         st.rerun()
 
@@ -415,13 +552,16 @@ elif st.session_state.page == "chat":
     st.markdown("""
     <div class="top-bar">
       <div class="top-bar-inner">
-        <div>
-          <div class="top-bar-title"><span class="top-bar-dot"></span>Secure Clinical Assistant</div>
-          <p class="top-bar-sub">ChromaDB + CalypsoAI &bull; Focused on your health records</p>
+        <div class="top-bar-logo">
+          <span class="cvs-wordmark">CVS</span>
+          <div>
+            <p class="top-bar-title">Secure Clinical Assistant</p>
+            <p class="top-bar-sub">ChromaDB + CalypsoAI · Focused on your health records</p>
+          </div>
         </div>
         <div class="top-bar-right">
-          <span class="status-pill"><span class="status-dot"></span>Idle</span>
-          <span class="gov-label">🛡️ Governance On</span>
+          <span class="status-pill"><span class="status-dot"></span>Ready</span>
+          <span class="gov-badge">🛡️ Governance On</span>
         </div>
       </div>
     </div>
@@ -430,14 +570,14 @@ elif st.session_state.page == "chat":
     col_back, col_clear = st.columns([1, 1])
     with col_back:
         st.markdown('<div class="ghost-btn">', unsafe_allow_html=True)
-        if st.button("⬅ Home"):
+        if st.button("← Back to Home"):
             st.session_state.page = "home"
             st.session_state.messages = []
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     with col_clear:
         st.markdown('<div class="ghost-btn">', unsafe_allow_html=True)
-        if st.button("🗑 Clear chat"):
+        if st.button("🗑  Clear Conversation"):
             st.session_state.messages = []
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
@@ -462,10 +602,10 @@ elif st.session_state.page == "chat":
             st.markdown(m["content"])
 
     # Native bottom-anchored chat input
-    if prompt := st.chat_input("Type your question..."):
+    if prompt := st.chat_input("Ask about your medications, refills, or dosage…"):
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        with st.spinner("Checking safety protocols..."):
+        with st.spinner("Checking safety protocols…"):
             response_data = calypso_send(prompt)
 
             if response_data:
