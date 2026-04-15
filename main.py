@@ -11,11 +11,11 @@ from openai import OpenAI
 load_dotenv()
 
 # 2. os.getenv automatically checks Render's Environment Variables dashboard.
-OPENAI_KEY = os.getenv("OPENAI_API_KEY")
-CALYPSO_TOKEN = os.getenv("CALYPSOAI_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+CALYPSOAI_TOKEN = os.getenv("CALYPSOAI_TOKEN")
 
 # 3. Double check if variables loaded
-if not OPENAI_KEY or not CALYPSO_TOKEN:
+if not OPENAI_API_KEY or not CALYPSOAI_TOKEN:
     st.error("Missing API Keys! Ensure they are set in Render's Environment Variables.")
     st.stop()
 
@@ -494,7 +494,7 @@ def load_chroma_collection():
 # -----------------------------
 def get_embedding(text: str, model: str = "text-embedding-3-small") -> list:
     """Generate an embedding vector using OpenAI."""
-    client = OpenAI(api_key=OPENAI_KEY)
+    client = OpenAI(api_key=OPENAI_API_KEY)
     text = text.replace("\n", " ")
     return client.embeddings.create(input=[text], model=model).data[0].embedding
 
@@ -515,7 +515,7 @@ def retrieve_context(query: str, top_k: int = 2) -> str:
 def calypso_send(text: str) -> dict:
     """Sends the prompt through the CalypsoAI Shield and returns the response."""
     headers = {
-        "Authorization": f"Bearer {CALYPSO_TOKEN}",
+        "Authorization": f"Bearer {CALYPSOAI_TOKEN}",
         "Content-Type": "application/json",
     }
     payload = {"input": text, "project": PROJECT_ID}
@@ -658,7 +658,7 @@ elif st.session_state.page == "chat":
                 else:
                     context = retrieve_context(prompt)
                     try:
-                        client = OpenAI(api_key=OPENAI_KEY)
+                        client = OpenAI(api_key=OPENAI_API_KEY)
                         llm_res = client.chat.completions.create(
                             model="gpt-4o",
                             messages=[
