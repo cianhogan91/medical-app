@@ -5,7 +5,7 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: streamlit run main.py --server.port $PORT --server.address 0.0.0.0
     envVars:
-      - key: OPENAI_API_KEY
+      - key: OPENAI_KEY
         sync: false
-      - key: CALYPSOAI_TOKEN
+      - key: CALYPSO_TOKEN
         sync: false
